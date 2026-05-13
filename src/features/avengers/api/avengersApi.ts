@@ -1,7 +1,9 @@
 import { createHttpClient } from '../../../lib/http/httpClient';
-import { isRemoteMode, appEnv } from '../../../lib/env/env';
+import { marvelClient } from '../../../lib/http/marvelClient';
+import { isRemoteMode, hasMarvelCredentials, appEnv } from '../../../lib/env/env';
 import { avengerMocks } from '../mock/avengers';
 import type { AvengerDto } from '../types/avenger';
+import { mapMarvelCharacterToAvengerDto } from '../mappers/avengerMapper';
 
 const client = appEnv.VITE_AVENGERS_API_BASE_URL
   ? createHttpClient({ baseUrl: appEnv.VITE_AVENGERS_API_BASE_URL })
@@ -42,23 +44,44 @@ function coerceDto(record: Record<string, unknown>): AvengerDto {
   };
 }
 
+async function fetchFromMarvel(search?: string): Promise<AvengerDto[]> {
+  if (!hasMarvelCredentials()) {
+    return [];
+  }
+
+  try {
+    const response = search
+      ? await marvelClient.getCharacters({ nameStartsWith: search, limit: 50 })
+      : await marvelClient.getAvengersCharacters(50, 0);
+
+    return response.data.results.map(mapMarvelCharacterToAvengerDto);
+  } catch {
+    return [];
+  }
+}
+
 async function readRemoteCollection(): Promise<AvengerDto[]> {
-  if (!client || !isRemoteMode()) {
-    return avengerMocks;
+  if (hasMarvelCredentials()) {
+    const marvelData = await fetchFromMarvel();
+    if (marvelData.length > 0) {
+      return marvelData;
+    }
   }
 
-  const response = await client.requestJson<unknown>('/avengers');
+  if (client && isRemoteMode()) {
+    const response = await client.requestJson<unknown>('/avengers');
 
-  if (Array.isArray(response)) {
-    return response.map((item) => coerceDto(item as Record<string, unknown>));
-  }
+    if (Array.isArray(response)) {
+      return response.map((item) => coerceDto(item as Record<string, unknown>));
+    }
 
-  if (response && typeof response === 'object') {
-    const container = response as Record<string, unknown>;
-    const nested = container.data ?? container.results ?? container.items ?? container.avengers;
+    if (response && typeof response === 'object') {
+      const container = response as Record<string, unknown>;
+      const nested = container.data ?? container.results ?? container.items ?? container.avengers;
 
-    if (Array.isArray(nested)) {
-      return nested.map((item) => coerceDto(item as Record<string, unknown>));
+      if (Array.isArray(nested)) {
+        return nested.map((item) => coerceDto(item as Record<string, unknown>));
+      }
     }
   }
 
@@ -77,6 +100,20 @@ export async function getAvengers(params: AvengersQueryParams = {}) {
 }
 
 export async function getAvengerById(id: string) {
+  if (hasMarvelCredentials()) {
+    try {
+      const numericId = parseInt(id, 10);
+      if (!Number.isNaN(numericId)) {
+        const response = await marvelClient.getCharacterById(numericId);
+        if (response.data.results.length > 0) {
+          return mapMarvelCharacterToAvengerDto(response.data.results[0]);
+        }
+      }
+    } catch {
+      // Fallback to local collection
+    }
+  }
+
   const collection = await readRemoteCollection();
   return collection.find((item) => item.id === id) ?? null;
 }
