@@ -1,4 +1,4 @@
-import type { Avenger, AvengerDto, AvengerStatus, AvengerTeam } from '../types/avenger';
+import type { Avenger, AvengerDto, AvengerStatus, AvengerTeam, MarvelCharacterData } from '../types/avenger';
 
 const teamOptions: AvengerTeam[] = ['Avengers', 'Guardians', 'X-Men', 'Fantastic Four', 'Solo'];
 const statusOptions: AvengerStatus[] = ['Active', 'Inactive'];
@@ -8,7 +8,7 @@ function resolveTeam(value: string | undefined): AvengerTeam {
     return value as AvengerTeam;
   }
 
-  return 'Solo';
+  return 'Avengers';
 }
 
 function resolveStatus(value: string | undefined): AvengerStatus {
@@ -37,4 +37,22 @@ export function mapAvengerDtoToAvenger(dto: AvengerDto): Avenger {
 
 export function mapAvengerDtosToAvengers(dtos: AvengerDto[]) {
   return dtos.map(mapAvengerDtoToAvenger);
+}
+
+export function mapMarvelCharacterToAvengerDto(character: MarvelCharacterData): AvengerDto {
+  return {
+    id: String(character.id),
+    name: character.name,
+    alias: character.name,
+    team: 'Avengers',
+    role: 'Hero',
+    universe: 'Marvel Cinematic Universe',
+    firstAppearance: 'Marvel Comics',
+    biography: character.description || `The hero known as ${character.name}.`,
+    imageUrl: character.thumbnail.path.includes('image_not_available')
+      ? ''
+      : `${character.thumbnail.path}/standard_fantastic.${character.thumbnail.extension}`,
+    powers: [],
+    status: 'Active',
+  };
 }

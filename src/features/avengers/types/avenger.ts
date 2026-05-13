@@ -28,3 +28,10 @@ export interface Avenger {
   powers: string[];
   status: AvengerStatus;
 }
+
+export interface MarvelCharacterData {
+  id: number;
+  name: string;
+  description: string;
+  thumbnail: { path: string; extension: string };
+}
