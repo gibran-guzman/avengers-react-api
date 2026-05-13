@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '../../../components/ui/Badge';
 import { Card } from '../../../components/ui/Card';
@@ -10,7 +11,7 @@ interface AvengerCardProps {
   avenger: Avenger;
 }
 
-export function AvengerCard({ avenger }: AvengerCardProps) {
+export const AvengerCard = memo(function AvengerCard({ avenger }: AvengerCardProps) {
   return (
     <Card>
       <div className="card__media">
@@ -41,4 +42,4 @@ export function AvengerCard({ avenger }: AvengerCardProps) {
       </div>
     </Card>
   );
-}
+});
