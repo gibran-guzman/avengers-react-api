@@ -17,7 +17,7 @@ export function AvengersPage() {
       count: query.data?.length ?? 0,
       search,
     };
-  }, [query.data?.length, search]);
+  }, [query.data, search]);
 
   return (
     <div>
