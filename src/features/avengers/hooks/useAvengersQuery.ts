@@ -12,7 +12,7 @@ export interface AvengersQueryParams {
 
 export function useAvengersQuery(params: AvengersQueryParams) {
   return useQuery<Avenger[]>({
-    queryKey: [QUERY_KEYS.avengers, params],
+    queryKey: [QUERY_KEYS.avengers, params.search, params.team, params.status],
     queryFn: () => listAvengers(params),
     enabled: params.enabled ?? true,
   });
